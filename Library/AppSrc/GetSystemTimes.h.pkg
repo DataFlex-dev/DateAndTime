@@ -1,0 +1,7 @@
+Use VdfBase.pkg
+
+External_Function WinAPI_GetSystemTimes "GetSystemTimes" Kernel32.dll ;
+    Pointer lpIdleTime ;
+    Pointer lpKernelTime ;
+    Pointer lpUserTime ;
+    Returns Boolean

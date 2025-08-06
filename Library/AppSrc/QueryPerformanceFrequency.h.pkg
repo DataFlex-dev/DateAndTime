@@ -1,0 +1,5 @@
+Use VdfBase.pkg
+
+External_Function WinAPI_QueryPerformanceFrequency "QueryPerformanceFrequency" Kernel32.dll ;
+    Address lpFrequency ;
+    Returns Boolean

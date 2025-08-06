@@ -1,0 +1,6 @@
+﻿Use VdfBase.pkg
+
+External_Function WinAPI_GetSystemTime "GetSystemTime" Kernel32.Dll ;
+    Pointer lpSystemTime ;
+    Returns Void_Type
+

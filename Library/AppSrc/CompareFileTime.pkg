@@ -1,0 +1,9 @@
+﻿External_Function WinAPI_CompareFileTime "CompareFileTime" Kernel32.dll ;
+    Pointer pFileTime1 ;
+    Pointer pFileTime2 ;
+    Returns Integer
+    
+Define ftCompareResult for Integer
+    Define ftCompareResultFirstEarlier  for -1  // First file time is earlier than second file time.
+    Define ftCompareResultEqual         for 0   // First file Time is equal to second file Time.
+    Define ftCompareResultFirstLater    for 1   // First file Time is later than second file Time.    

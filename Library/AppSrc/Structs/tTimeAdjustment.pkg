@@ -1,0 +1,9 @@
+Use VdfBase.pkg
+
+// Self defined type defintion to store the results of SystemTimeAdjustment
+
+Struct tTimeAdjustment
+    UInteger uiAdjustment
+    UInteger uiIncrement
+    Boolean bDisabled
+End_Struct

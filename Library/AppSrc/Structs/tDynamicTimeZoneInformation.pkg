@@ -1,0 +1,14 @@
+﻿Use VdfBase.pkg
+Use Structs\tSystemTime.pkg
+
+Struct tDynamicTimeZoneInformation
+    Integer Bias
+    UShort[32] StandardName
+    tWinSystemTime StandardDate
+    Integer StandardBias
+    UShort[32] DaylightName
+    tWinSystemTime DaylightDate
+    Integer DaylightBias
+    UShort[128] TimeZoneKeyName
+    UShort DynamicDaylightTimeDisabled
+End_Struct

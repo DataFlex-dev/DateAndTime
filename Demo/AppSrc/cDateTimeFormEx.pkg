@@ -1,0 +1,32 @@
+Use Windows.pkg
+
+{ OverrideProperty = Form_Datatype Visibility = Private }
+{ Description = "Modified DateTime Form to support milliseconds" }
+Class cDateTimeFormEx is a Form
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Form_Datatype to Mask_Datetime_Window
+    End_Procedure
+
+    Procedure Add_Focus Handle hoParent Returns Integer
+        Integer iRetval iPos
+        String sMask
+
+        Forward Get Msg_Add_Focus hoParent to iRetval
+        If (not (iRetval)) Begin
+            Get Form_Mask to sMask
+            Move (Pos ('.fff', sMask)) to iPos
+            If (iPos = 0) Begin
+                Move (Pos ('ss', sMask)) to iPos
+                If (iPos > 0) Begin
+                    Move (Insert ('.fff', sMask, iPos + 2)) to sMask
+                End
+            End
+            Set Form_Mask to sMask
+        End
+
+        Procedure_Return iRetval
+    End_Procedure
+End_Class
+

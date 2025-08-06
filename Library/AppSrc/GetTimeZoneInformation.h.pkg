@@ -1,0 +1,22 @@
+﻿Use VdfBase.pkg
+
+Define TIME_ZONE_ID_INVALID     for |CV4294967295
+Define TIME_ZONE_ID_UNKNOWN     for 0 // Daylight saving Time is not used in the current Time zone, because there are no transition dates.
+Define TIME_ZONE_ID_STANDARD    for 1 // The system is operating in the range covered by the StandardDate member of the DYNAMIC_TIME_ZONE_INFORMATION structure.
+Define TIME_ZONE_ID_DAYLIGHT    for 2 // The system is operating in the range covered by the DaylightDate member of the DYNAMIC_TIME_ZONE_INFORMATION structure.
+
+External_Function WinAPI_GetTimeZoneInformation "GetTimeZoneInformation" Kernel32.Dll ;
+    Pointer lpTimeZoneInformation ;
+    Returns UInteger
+
+External_Function WinAPI_GetTimeZoneInformationForYear "GetTimeZoneInformationForYear" Kernel32.Dll ;
+    UShort wYear ;
+    Pointer lpDynamicTimeZoneInformation ;
+    Pointer lpTimeZoneInformation ;
+    Returns Boolean
+
+External_Function WinAPI_GetDynamicTimeZoneInformationEffectiveYears "GetDynamicTimeZoneInformationEffectiveYears" AdvApi32.dll ;
+    Pointer lpTimeZoneInformation ;
+    Pointer FirstYear ;
+    Pointer LastYear ;
+    Returns UInteger

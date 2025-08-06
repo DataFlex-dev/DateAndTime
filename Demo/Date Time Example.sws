@@ -1,0 +1,12 @@
+[Properties]
+Version=25.0
+[WorkspacePaths]
+ConfigFile=.\Programs\Config.ws
+[Libraries]
+Lib1=..\Library\DateTime.sws
+Lib2=..\..\Conversions\Library\Conversions.sws
+[Conditionals]
+Is$WebApp=False
+Is$Win64=True
+[Projects]
+Project0=TestLibrary.Src

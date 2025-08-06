@@ -1,0 +1,8 @@
+﻿Use VdfBase.pkg
+
+// lpFileTime     :pointer to file time to convert
+// lpSystemTime   :pointer to structure to receive system time
+External_Function WinApi_FileTimeToSystemTime "FileTimeToSystemTime" Kernel32.Dll ;
+    Pointer lpFileTime ;
+    Pointer lpSystemTime ;
+    Returns Integer

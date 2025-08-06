@@ -1,0 +1,25 @@
+﻿Use VdfBase.pkg
+Use tWinStructs.pkg
+
+// STM = SysTimeMonth
+Define C_STM_January     For 1
+Define C_STM_February    For 2
+Define C_STM_March       For 3
+Define C_STM_April       For 4
+Define C_STM_May         For 5
+Define C_STM_June        For 6
+Define C_STM_July        For 7
+Define C_STM_August      For 8
+Define C_STM_September   For 9
+Define C_STM_October     For 10
+Define C_STM_November    For 11
+Define C_STM_December    For 12
+
+// STWD = SysTimeWeekDay
+Define C_STWD_Sunday    For 0
+Define C_STWD_Monday    For 1
+Define C_STWD_Tuesday   For 2
+Define C_STWD_Wednesday For 3
+Define C_STWD_Thursday  For 4
+Define C_STWD_Friday    For 5
+Define C_STWD_Saturday  For 6

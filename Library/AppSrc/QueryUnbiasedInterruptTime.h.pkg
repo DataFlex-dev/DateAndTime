@@ -1,0 +1,6 @@
+﻿Use VdfBase.pkg
+
+External_Function WinAPI_QueryUnbiasedInterruptTime "QueryUnbiasedInterruptTime" Kernel32.dll ;
+    Pointer UnbiasedTime ;
+    Returns Boolean
+    

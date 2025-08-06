@@ -1,0 +1,33 @@
+Use VdfBase.pkg
+
+Class cMathHandler is a cObject
+    { Description = "Returns the least integer less than or equal to the passed value" }
+    { Description += "Example: 2.4 returns 3 and 2.9 also returns 3." }
+    Function Ceiling Float fIn Returns Integer
+        Integer iResult
+
+        If (fIn < 0.0) Begin
+            Move (Integer (fIn)) to iResult
+        End
+        Else Begin
+            Move (Integer (fIn) + 1) to iResult
+        End
+
+        Function_Return iResult
+    End_Function
+
+    { Description = "Returns the greatest integer less than or equal to the passed value" }
+    { Description += "Example: 2.4 returns 2 and 2.9 also returns 2." }
+    Function Floor Float fIn Returns Integer
+        Integer iResult
+
+        If (fIn < 0.0) Begin
+            Move (Integer (fIn) - 1) to iResult
+        End
+        Else Begin
+            Move (Integer (fIn)) to iResult
+        End
+
+        Function_Return iResult
+    End_Function
+End_Class

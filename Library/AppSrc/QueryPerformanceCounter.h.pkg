@@ -1,0 +1,5 @@
+﻿Use VdfBase.pkg
+
+External_Function WinAPI_QueryPerformanceCounter "QueryPerformanceCounter" Kernel32.dll ;
+    Pointer lpPerformanceCount ;
+    Returns Boolean

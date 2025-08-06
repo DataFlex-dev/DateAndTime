@@ -1,0 +1,9 @@
+Use VdfBase.pkg
+
+// lpSystemTime: a Pointer to a SYSTEMTIME structure that contains the system Time to be converted from UTC to file Time format.
+//               The wDayOfWeek member of the SYSTEMTIME structure is ignored.
+// lpFileTime  : a Pointer to a FILETIME structure to receive the converted system Time.
+External_Function WinAPI_SystemTimeToFileTime "SystemTimeToFileTime" Kernel32.dll ;
+    Pointer lpSystemTime ;
+    Pointer lpFileTime ;
+    Returns Boolean

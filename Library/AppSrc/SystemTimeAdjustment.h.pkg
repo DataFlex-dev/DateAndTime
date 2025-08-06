@@ -1,0 +1,40 @@
+﻿Use VdfBase.pkg
+
+// Determines whether the system is applying periodic time adjustments to its time-of-day clock, and obtains the value and period of any such adjustments.
+
+// Parameters
+//    lpTimeAdjustment [out]
+//       a Pointer to a variable that the Function sets to the Number of lpTimeIncrement100-nanosecond units added 
+//       to the Time-of-day clock for every period of Time which actually passes as counted by the system. This 
+//       value only has meaning If lpTimeAdjustmentDisabled is False.
+//
+//    lpTimeIncrement [out]
+//       a Pointer to a variable that the Function sets to the interval in 100-nanosecond units at which the system 
+//       will Add lpTimeAdjustment to the Time-of-day clock. This value only has meaning If lpTimeAdjustmentDisabled is False.
+//
+//    lpTimeAdjustmentDisabled [out]
+//       a Pointer to a variable that the Function sets to indicate whether periodic Time adjustment is in effect.
+//
+//       a value of True indicates that periodic Time adjustment is disabled, and the system Time-of-day clock advances at the 
+//       normal rate. In this mode, the system may adjust the Time of day using its own internal Time synchronization 
+//       mechanisms. These internal Time synchronization mechanisms may cause the Time-of-day clock to change during the 
+//       normal course of the system operation, which can include noticeable jumps in Time as deemed necessary by the system.
+//
+//       a value of False indicates that periodic Time adjustment is being used to adjust the Time-of-day clock. for 
+//       each lpTimeIncrement period of Time that actually passes, lpTimeAdjustment will be added to the Time of day. 
+//       If the lpTimeAdjustment value is smaller than lpTimeIncrement, the system Time-of-day clock will advance at a rate 
+//       slower than normal. If the lpTimeAdjustment value is larger than lpTimeIncrement, the Time-of-day clock will advance 
+//       at a rate faster than normal. If lpTimeAdjustment equals lpTimeIncrement, the Time-of-day clock will advance at its 
+//       normal speed. The lpTimeAdjustment value can be Set by calling SetSystemTimeAdjustment. The lpTimeIncrement value is 
+//       fixed by the system upon start, and does not change during system operation. In this mode, the system will not interfere 
+//       with the Time adjustment scheme, and will not attempt to synchronize Time of day on its own via other techniques.
+//
+// Return Value
+//    If the Function succeeds, the return value is nonzero.
+//    If the Function fails, the return value is zero. to Get extended Error information, call GetLastError.
+
+External_Function WINAPI_GetSystemTimeAdjustment "GetSystemTimeAdjustment" Kernel32.dll ;
+    Pointer lpTimeAdjustment ;
+    Pointer lpTimeIncrement ;
+    Pointer lpTimeAdjustmentDisabled ;
+    Returns Boolean

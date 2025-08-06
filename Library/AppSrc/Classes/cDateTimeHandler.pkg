@@ -1,0 +1,1050 @@
+﻿Use VdfBase.pkg
+Use Winkern.pkg
+
+// Includes structure definitions
+Use Structs\tSystemTime.pkg
+Use Structs\tTimeZoneInformation.pkg
+Use Structs\tDynamicTimeZoneInformation.pkg
+Use Structs\tTimeAdjustment.pkg
+
+// Include Windows API functions
+Use GetDateFormat.h.pkg
+Use GetTimeFormat.h.pkg
+Use GetSystemTime.h.pkg
+Use FileTimeToLocalFileTime.h.pkg
+Use FileTimeToSystemTime.h.pkg
+Use GetTimeZoneInformation.h.pkg
+Use SystemTimeToTzSpecificLocalTime.h.pkg
+Use SystemTimeToFileTime.h.pkg
+Use SystemTimeAdjustment.h.pkg
+Use SystemTimePreciseAsFileTime.h.pkg
+Use GetSystemTimeAsFileTime.h.pkg
+Use SetSystemTime.h.pkg
+Use GetSystemTimes.h.pkg
+Use SetLocalTime.h.pkg
+Use QueryPerformanceCounter.h.pkg
+Use QueryPerformanceFrequency.h.pkg
+Use QueryUnbiasedInterruptTime.h.pkg
+Use TzSpecificLocalTimeToSystemTime.h.pkg
+Use CompareFileTime.pkg
+
+Define C_FIRSTMONTHOFYEAR   for 1
+Define C_LASTMONTHOFYEAR    for 12
+Define C_LASTDAYOFDEC       for 31
+Define C_FIRSTDAYOFJAN      for 1
+Define C_THURSDAY           for 4
+
+// For ShowLastError
+Use GlobalFunctionsProcedures.pkg
+
+// Math Handler class
+Use Classes\cMathHandler.pkg
+Use Classes\cLocaleInfoHandler.pkg
+
+Class cDateTimeHandler is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        { Visibility = Private }
+        { Description = "Can be user default, system default or another locale" }
+        Property String private_psLocaleName ""
+
+        { Description = "Create an object of the cLocaleInfoHandler" }
+        Object oLocaleInfoHandler is a cLocaleInfoHandler
+        End_Object
+    End_Procedure
+
+    { Description = "Can be user default, system default or another locale" }
+    { MethodType = Property }
+    Procedure Set psLocaleName String sLocaleName
+        Set private_psLocaleName to sLocaleName
+        Set psLocaleName of oLocaleInfoHandler to sLocaleName
+    End_Procedure
+
+    { Description = "Can be user default, system default or another locale" }
+    { MethodType = Property }
+    Function psLocaleName Returns String
+        String sLocaleName
+
+        Get private_psLocaleName to sLocaleName
+
+        Function_Return sLocaleName
+    End_Function
+
+    { Description = "Compares two time values. Return values are ftCompareResultFirstEarlier, ftCompareResultEqual, ftCompareResultFirstLater" }
+    Function CompareFileTimes tWinFileTime FirstTimeValue tWinFileTime SecondTimeValue Returns ftCompareResult
+        Integer iResult
+
+        Move (WinAPI_CompareFileTime (AddressOf (FirstTimeValue), AddressOf (SecondTimeValue))) to iResult
+
+        Function_Return iResult
+    End_Function
+
+    { Description = "Gets the UTC date & time by converting the local date & time to a UNIX time which is always a UTC time" }
+    Function CurrentUTCDateTime Returns DateTime
+        Integer iSeconds
+        DateTime dtUTC
+
+        Get DateTimeToUnixTime (CurrentDateTime ()) to iSeconds
+        Get UnixTimeToUTCDateTime iSeconds to dtUTC
+
+        Function_Return dtUTC
+    End_Function
+
+    { Description = "Converts a DateTime value into a tWinFileTime value" }
+    Function DateTimeToFileTime DateTime dtIn Returns tWinFileTime
+        tWinFileTime FileTimeResult
+        tWinSystemTime SystemTimeResult
+
+        Get DateTimeToSystemTime dtIn to SystemTimeResult
+        Get SystemTimeToFileTime SystemTimeResult to FileTimeResult
+
+        Function_Return FileTimeResult
+    End_Function
+
+    { Description = "Returns the JavaScript time from a given datetime value. JS time is the number of milliseconds since 1/1/1970" }
+    Function DateTimeToJavaScriptTime DateTime dtIn Returns BigInt
+        DateTime dtUTC dtStart
+        TimeSpan tsDiff
+        BigInt biMilliSeconds
+        Boolean bSuccess
+        tWinSystemTime stIn stUTC
+        tTimeZoneInformation tzInfo
+
+        Get TimeZoneInformation to tzInfo
+        Get DateTimeToSystemTime dtIn to stIn
+        Move (WinAPI_TzSpecificLocalTimeToSystemTime (AddressOf (tzInfo), AddressOf (stIn), AddressOf (stUTC))) to bSuccess
+        If (bSuccess) Begin
+            Get SystemTimeToDateTime stUTC to dtUTC
+            Move 1/1/1970 to dtStart
+            Move (dtUTC - dtStart) to tsDiff
+            Move (SpanTotalMilliseconds (tsDiff)) to biMilliSeconds
+        End
+
+        Function_Return biMilliSeconds
+    End_Function
+
+    { Description = "Converts a DateTime value to a tSystemTime Value" }
+    Function DateTimeToSystemTime DateTime dtIn Returns tWinSystemTime
+        tWinSystemTime SystemTimeResult
+
+        Move (DateGetYear (dtIn)) to SystemTimeResult.wYear
+        Move (DateGetMonth (dtIn)) to SystemTimeResult.wMonth
+        Move (DateGetDay (dtIn)) to SystemTimeResult.wDay
+        Move (DateGetHour (dtIn)) to SystemTimeResult.wHour
+        Move (DateGetMinute (dtIn)) to SystemTimeResult.wMinute
+        Move (DateGetSecond (dtIn)) to SystemTimeResult.wSecond
+        Move (DateGetMillisecond (dtIn)) to SystemTimeResult.wMilliseconds
+        Move (DateGetDayOfWeek (dtIn)) to SystemTimeResult.wDayOfWeek
+
+        Function_Return SystemTimeResult
+    End_Function
+
+    { Description = "Returns the UNIX time from a given datetime value. UNIX time is the number of seconds since 1/1/1970" }
+    Function DateTimeToUnixTime DateTime dtIn Returns Integer
+        DateTime dtUTC dtStart
+        TimeSpan tsDiff
+        Integer iSeconds
+        Boolean bSuccess
+        tWinSystemTime stIn stUTC
+        tTimeZoneInformation tzInfo
+
+        Get TimeZoneInformation to tzInfo
+        Get DateTimeToSystemTime dtIn to stIn
+        Move (WinAPI_TzSpecificLocalTimeToSystemTime (AddressOf (tzInfo), AddressOf (stIn), AddressOf (stUTC))) to bSuccess
+        If (bSuccess) Begin
+            Get SystemTimeToDateTime stUTC to dtUTC
+            Move 1/1/1970 to dtStart
+            Move (dtUTC - dtStart) to tsDiff
+            Move (SpanTotalSeconds (tsDiff)) to iSeconds
+        End
+
+        Function_Return iSeconds
+    End_Function
+
+    { Description = "Converts a tWinFileTime value to a DataFlex DateTime value" }
+    Function FileTimeToDateTime tWinFileTime FileTimeIn Returns DateTime
+        Integer iSuccess iErrorCode
+        tWinSystemTime ConvertedFileTime
+        DateTime dtResult
+
+        Move (WinAPI_FileTimeToSystemTime (AddressOf (FileTimeIn), AddressOf (ConvertedFileTime))) to iSuccess
+        If (iSuccess <> 0) Begin
+            Get SystemTimeToDateTime ConvertedFileTime to dtResult
+        End
+        Else Begin
+            Move (ShowLastError ()) to iErrorCode
+        End
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Converts a UTC file time to a local file time. If conversion fails the input time is returned" }
+    Function FileTimeToLocalFileTime tWinFileTime FileTimeIn Returns tWinFileTime
+        tWinFileTime LocalFileTime
+        Integer iSuccess
+
+        Move (WinAPI_FileTimeToLocalFileTime (AddressOf (FileTimeIn), AddressOf (LocalFileTime))) to iSuccess
+        If (iSuccess <> 0) Begin
+            Function_Return LocalFileTime
+        End
+
+        Function_Return FileTimeIn
+    End_Function
+
+    { Description = "Returns the First Day Of Week number according to the set locale identifier." }
+    { Description += "Call is redirected to a Function with the same name in the cLocaleInfoHandler" }
+    Function FirstDayOfWeek Returns Integer
+        Integer iDay
+
+        Get LocaleFirstDayOfWeek of oLocaleInfoHandler to iDay
+
+        Function_Return iDay
+    End_Function
+
+    { Description = "Returns the First Week Of Year number according to the set locale identifier." }
+    { Description += "Call is redirected to a Function with the same name in the cLocaleInfoHandler" }
+    Function FirstWeekOfYear Returns Integer
+        Integer iWeek
+
+        Get LocaleFirstWeekOfYear of oLocaleInfoHandler to iWeek
+
+        Function_Return iWeek
+    End_Function
+
+    { Description = "Formats a tSystemTime value to a DataFlex Date value using the regional settings from the psLocaleName property" }
+    { Description += "Make sure the psLocaleName date formatting matches the DataFlex date formatting (DF_DATE_FORMAT); if not you will receive an error 16 (DFERR_ENTER_VALID_DATE)" }
+    Function FormatSystemTimeToDate tWinSystemTime SystemTimeIn Returns Date
+        Integer iDataLength
+        WString wsFormattedDate wsLocaleName
+        Date dFormattedDate
+
+        Get psLocaleName to wsLocaleName
+        Move (WinAPI_GetDateFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), 0, 0, 0, 0)) to iDataLength
+        Move (ZeroString (iDataLength)) to wsFormattedDate
+        Move (WinAPI_GetDateFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), 0, AddressOf (wsFormattedDate), iDataLength, 0)) to iDataLength
+
+        Move (Date (Cstring (wsFormattedDate))) to dFormattedDate
+
+        Function_Return dFormattedDate
+    End_Function
+
+    { Description = "Formats a tSystemTime value to a DataFlex Time value using the regional settings from the psLocaleName property" }
+    Function FormatSystemTimeToTime tWinSystemTime SystemTimeIn Returns Time
+        Integer iDataLength
+        WString wsFormattedTime wsLocaleName
+        Time tFormattedTime
+
+        Get psLocaleName to wsLocaleName
+        Move (WinAPI_GetTimeFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), 0, 0, 0)) to iDataLength
+        Move (ZeroString (iDataLength)) to wsFormattedTime
+        Move (WinAPI_GetTimeFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), 0, AddressOf (wsFormattedTime), iDataLength)) to iDataLength
+        Move (CString (wsFormattedTime)) to tFormattedTime
+
+        Function_Return tFormattedTime
+    End_Function
+    
+    { Description = "Checks if the day number of the given datetime is the last day of the month" }
+    Function IsEndOfMonth DateTime dtDate Returns Boolean
+        Integer iYear iMonth iDay iDaysInMonth
+    
+        // Get the year, month, and day from the date
+        Move (DateGetYear (dtDate)) to iYear
+        Move (DateGetMonth (dtDate)) to iMonth
+        Move (DateGetDay (dtDate)) to iDay
+    
+        // Get the number of days in the month
+        Get NumberDaysInMonth iYear iMonth to iDaysInMonth
+    
+        Function_Return (iDay = iDaysInMonth)
+    End_Function
+
+    { Description = "Determines whether the year is a leap year. Leap years are years that can be divided by 4 or 400" }
+    { Description += "In Excel the following formula can be used: IF(OR(MOD(A1,400)=0,AND(MOD(A1,4)=0,MOD(A1,100)<>0)),'Leap Year', 'NOT a Leap Year')" }
+    Function IsLeapYear Integer iYear Returns Boolean
+        Boolean bLeapYear
+        
+        Move False to bLeapYear
+        
+        If (Mod (iYear, 4) = 0) Begin
+            If (Mod (iYear, 100) = 0) Begin
+                If (Mod (iYear, 400) = 0) Begin
+                    Move True to bLeapYear
+                End
+            End
+            Else Begin
+                Move True to bLeapYear
+            End
+        End
+    
+        Function_Return bLeapYear
+    End_Function
+    
+    { Description = "Returns the weeknumber of a given date according to ISO 8601" }
+    { Description += "Function code rewritten for code published by Patrik Bohman." }
+    Function ISO8601WeekNumber Date dDateIn Returns Integer
+        DateTime dtFirstDayInYear dtLastDayInYear
+        Integer iDayOfYear iStartWeekDayOfYear iEndWeekDayOfYear iYear
+        Integer iDaysInFirstWeek iDaysInLastWeek iWeekNumber iFirstDayOfWeek iRetval
+        Boolean bWeek53Flag
+
+        // Get the day number since the beginning of the year
+        Move (DateGetDayOfYear (dDateIn)) to iDayOfYear
+
+        // Get the numeric weekday of the first day of the
+        // year (using sunday as FirstDay)
+        Move (DateSetDay (dDateIn, C_FIRSTDAYOFJAN)) to dtFirstDayInYear
+        Move (DateSetMonth (dtFirstDayInYear, C_FIRSTMONTHOFYEAR)) to dtFirstDayInYear
+        Move (DateGetDayOfWeek (dtFirstDayInYear)) to iStartWeekDayOfYear
+
+        // Get the numeric weekday of the last day of the
+        // year (using sunday as FirstDay). 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday, 6=Friday, 7=Saturday
+        Move (DateSetDay (dDateIn, 28)) to dtLastDayInYear
+        Move (DateSetMonth (dtLastDayInYear, C_LASTMONTHOFYEAR)) to dtLastDayInYear
+        Move (DateSetDay (dtLastDayInYear, C_LASTDAYOFDEC)) to dtLastDayInYear
+        Move (DateGetDayOfWeek (dtLastDayInYear)) to iEndWeekDayOfYear
+
+        // Compensate for the fact that Windows might return a different day
+        // as the first day of the week (0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday)
+        // According to
+        Get FirstDayOfWeek to iFirstDayOfWeek
+        If (iFirstDayOfWeek <= 5) Begin
+            Move (iStartWeekDayOfYear - 1) to iStartWeekDayOfYear
+            Move (iEndWeekDayOfYear - 1) to iEndWeekDayOfYear
+        End
+        Else Begin
+            Move (iStartWeekDayOfYear - 5) to iStartWeekDayOfYear
+            Move (iEndWeekDayOfYear - 5) to iEndWeekDayOfYear
+        End
+
+        // Calculate the number of days in the first and last week
+        Move (8 - iStartWeekDayOfYear) to iDaysInFirstWeek
+        Move (8 - iEndWeekDayOfYear) to iDaysInLastWeek
+
+        // If the year either starts or ends on a
+        // thursday it will have a 53rd week
+        If (iStartWeekDayOfYear = C_THURSDAY or iEndWeekDayOfYear = C_THURSDAY) Begin
+            Move True to bWeek53Flag
+        End
+
+        // We begin by calculating the number of FULL
+        // weeks between the start of the year and
+        // our date. The number is rounded up, so the
+        // smallest possible value is 0.
+        Move ((iDayOfYear - iDaysInFirstWeek) / 7.0) to iWeekNumber
+        If (Mod (iDayOfYear - iDaysInFirstWeek, 7) > 0) Begin
+            Increment iWeekNumber
+        End
+
+        // If the first week of the year has at least four days,
+        // then the actual week number for our date
+        // can be incremented by one.
+        If (iDaysInFirstWeek >= C_THURSDAY) Begin
+            Increment iWeekNumber
+        End
+
+        // If week number is larger than week 52 (and the year
+        // doesn't either start or end on a thursday)
+        // then the correct week number is 1.
+        If (iWeekNumber > 52 and (not (bWeek53Flag))) Begin
+            Move 1 to iWeekNumber
+        End
+
+        // If week number is still 0, it means that we are trying
+        // to evaluate the week number for a week that belongs in the
+        // previous year (since that week has 3 days or less in our date's year).
+        // We therefore make a recursive call using the last day of
+        // the previous year.
+        If (iWeekNumber = 0) Begin
+            Move (DateGetYear (dtLastDayInYear)) to iYear
+            Move (DateSetYear (dtLastDayInYear, iYear - 1)) to dtLastDayInYear
+            Get ISO8601WeekNumber dtLastDayInYear to iWeekNumber
+        End
+
+        Function_Return iWeekNumber
+    End_Function
+
+    { Description = "Calculates the DateTime from a JavaScript time. JS time is the number of milliseconds since 1/1/1970" }
+    Function JavaScriptTimeToLocalDateTime BigInt biMilliSeconds Returns DateTime
+        DateTime dtResult
+        tWinSystemTime stResult
+        tTimeZoneInformation tzInfo
+
+        Move 1/1/1970 to dtResult
+        Move (DateAddMillisecond (dtResult, biMilliSeconds)) to dtResult
+
+        Get DateTimeToSystemTime dtResult to stResult
+        Get TimeZoneInformation to tzInfo
+        Get SystemTimeToTzSpecificLocalTime tzInfo stResult to stResult
+        Get SystemTimeToDateTime stResult to dtResult
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Calculates the UTC DateTime from a JavaScript time. JS time is the number of milliseconds since 1/1/1970" }
+    Function JavaScriptTimeToUTCDateTime BigInt biMilliSeconds Returns DateTime
+        DateTime dtResult
+
+        Move 1/1/1970 to dtResult
+        Move (DateAddMillisecond (dtResult, biMilliSeconds)) to dtResult
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Generates a formatted string representation of the datetime, employing" }
+    { Description += "the locale specified from the array elements obtained through AllLocaleCodes." }
+    { Description += "The formatting adheres to either the ShortDate format String retrievable" }
+    { Description += "from LocaleShortDateFormat or the Long Date format String obtainable" }
+    { Description += "through the LocaleLongDateFormat Function" }
+    Function LocaleFormatDateTime DateTime dtIn WString wsLocaleName WString wsFormat Returns String
+        tWinSystemTime SystemTimeIn
+        Integer iDataLength
+        WString wsFormattedValue
+
+        Get DateTimeToSystemTime dtIn to SystemTimeIn
+        Move (WinAPI_GetDateFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), AddressOf (wsFormat), 0, 0, 0)) to iDataLength
+        Move (ZeroString (iDataLength)) to wsFormattedValue
+        Move (WinAPI_GetDateFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), AddressOf (wsFormat), AddressOf (wsFormattedValue), iDataLength, 0)) to iDataLength
+
+        Function_Return wsFormattedValue
+    End_Function
+
+    { Description = "Yields a string with the datetime formatted according to the locale name" }
+    { Description += "selected from the array elements retrieved through AllLocaleCodes." }
+    { Description += "The Time format utilized is determined by the String returned from LocaleTimeFormat." }
+    Function LocaleFormatTime DateTime dtIn WString wsLocaleName WString wsFormat Returns String
+        tWinSystemTime SystemTimeIn
+        Integer iDataLength
+        WString wsFormattedValue
+
+        Get DateTimeToSystemTime dtIn to SystemTimeIn
+        Move (WinApi_GetTimeFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), AddressOf (wsFormat), 0, 0)) to iDataLength
+        Move (ZeroString (iDataLength)) to wsFormattedValue
+        Move (WinApi_GetTimeFormatEx (AddressOf (wsLocaleName), 0, AddressOf (SystemTimeIn), AddressOf (wsFormat), AddressOf (wsFormattedValue), iDataLength)) to iDataLength
+
+        Function_Return wsFormattedValue
+    End_Function
+
+    { Description = "Returns the DateFormat according to the set locale identifier." }
+    { Description += "Call is redirected to a function with the same name in the cLocaleInfoHandler" }
+    Function LocaleLongDateFormat Returns String
+        String sFormat
+
+        Get LocaleLongDateFormat of oLocaleInfoHandler to sFormat
+
+        Function_Return sFormat
+    End_Function
+
+    { Description = "Returns the DateFormat according to the set locale identifier." }
+    { Description += "Call is redirected to a function with the same name in the cLocaleInfoHandler" }
+    Function LocaleShortDateFormat Returns String
+        String sFormat
+
+        Get LocaleShortDateFormat of oLocaleInfoHandler to sFormat
+
+        Function_Return sFormat
+    End_Function
+
+    { Description = "Returns the TimeFormat according to the set locale identifier." }
+    { Description += "Call is redirected to a Function with the same name in the cLocaleInfoHandler" }
+    Function LocaleTimeFormat Returns String
+        String sFormat
+
+        Get LocaleTimeFormat of oLocaleInfoHandler to sFormat
+
+        Function_Return sFormat
+    End_Function
+
+    { Description = "Returns the date of the monday in a given week in a given year" }
+    Function MondayOfWeekYear Integer iWeek Integer iYear Returns DateTime
+        Integer iWeekStart iDay iDiff
+        DateTime dtResult
+
+        // Make January 1st of the passed year
+        Move (DateSet (iYear, 1, 1)) to dtResult
+        // Get The weeknumber of this date
+        Move (DateGetWeekOfYearISO (dtResult)) to iWeekStart
+        // Add 7 days when the weeknumber is not equal to 1
+        If (iWeekStart <> 1) Begin
+            Move (DateAddDay (dtResult, 7)) to dtResult
+        End
+
+        // Get the day number of the date in the first week
+        Move (DateGetDayofWeekISO (dtResult)) to iDay
+        // Calculate the difference between day number of the first week and the monday
+        Move (1 - iDay) to iDiff
+        // Calculate the monday via the difference of the correct monday and the first monday of the year
+        Move (DateAddDay (dtResult, iDiff)) to dtResult
+
+        // Add number of days to the calculated date to get the monday
+        Move (DateAddDay (dtResult, (iWeek - 1) * 7)) to dtResult
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Returns the number of days in a month. Can be 28, 29, 30 or 31" }
+    Function NumberDaysInMonth Integer iYear Integer iMonth Returns Integer
+        Integer iDays
+        Boolean bIsLeapYear
+        
+        Case Begin
+            Case (iMonth = 1)
+            Case (iMonth = 3)
+            Case (iMonth = 5)
+            Case (iMonth = 7)
+            Case (iMonth = 8) 
+            Case (iMonth = 10) 
+            Case (iMonth = 12)
+                Move 31 to iDays
+                Case Break            
+            Case (iMonth = 4)
+            Case (iMonth = 6)
+            Case (iMonth = 9)
+            Case (iMonth = 11)
+                Move 30 to iDays
+                Case Break                
+            Case (iMonth = 2)
+                Get IsLeapYear iYear to bIsLeapYear
+                If (bIsLeapYear) Begin
+                    Move 29 to iDays
+                End
+                Else Begin
+                    Move 28 to iDays
+                End
+                Case Break
+        Case End
+        
+        Function_Return iDays
+    End_Function
+    
+    { Description = "Retrieves the current system date and time with the highest possible level of precision (<1us)" }
+    Function PreciseSytemTime Returns DateTime
+        tWinFileTime PreciseSystemTimeInfo
+        Boolean bResult
+        DateTime dtResult
+
+        Move (WinAPI_GetSystemTimePreciseAsFileTime (AddressOf (PreciseSystemTimeInfo))) to bResult
+        If (bResult) Begin
+            Get FileTimeToDateTime PreciseSystemTimeInfo to dtResult
+        End
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Retrieves the current value of the performance counter, which is a high resolution (<1us) time stamp that can be used for time-interval measurements." }
+    Function QueryPerformanceCounter Returns UBigInt
+        UBigInt ubiPerformanceCounter
+        Boolean bSuccess
+
+        Move 0 to ubiPerformanceCounter
+        Move (WinAPI_QueryPerformanceCounter (AddressOf (ubiPerformanceCounter))) to bSuccess
+        If (bSuccess) Begin
+            Function_Return ubiPerformanceCounter
+        End
+
+        Function_Return 0
+    End_Function
+
+    { Description = "Retrieves the frequency of the performance counter. The frequency of the performance counter is fixed at system boot and is consistent across all processors. Therefore, the frequency need only be queried upon application initialization, and the result can be cached." }
+    Function QueryPerformancePercentage Returns UBigInt
+        UBigInt ubiPerformancePercentage
+        Boolean bSuccess
+
+        Move 0 to ubiPerformancePercentage
+        Move (WinAPI_QueryPerformanceFrequency (AddressOf (ubiPerformancePercentage))) to bSuccess
+        If (bSuccess) Begin
+            Function_Return ubiPerformancePercentage
+        End
+
+        Function_Return 0
+    End_Function
+
+    { Description = "Gets the current unbiased interrupt-time count." }
+    { Description += "The unbiased interrupt-Time count does not include Time the system spends in Sleep or hibernation." }
+    Function QueryUnbiasedInterruptTime Returns UBigInt
+        UBigInt ubiUnbiasedTime
+        Boolean bSuccess
+
+        Move 0 to ubiUnbiasedTime
+        Move (WinAPI_QueryUnbiasedInterruptTime (AddressOf (ubiUnbiasedTime))) to bSuccess
+        If (bSuccess) Begin
+            Function_Return ubiUnbiasedTime
+        End
+
+        Function_Return 0
+    End_Function
+
+    { Description = "Sets the current local time and date." }
+    Function SetLocalTime DateTime dtNewDateTime Returns Boolean
+        tWinSystemTime NewDateTime
+        Boolean bErr
+
+        If (IsAdministrator ()) Begin
+            Get DateTimeToSystemTime dtNewDateTime to NewDateTime
+            Move (WinAPI_SetLocalTime (AddressOf (NewDateTime))) to bErr
+        End
+
+        Function_Return bErr
+    End_Function
+
+    { Description = "Changes the system time. Needs appropriate rights to be succesful, run program via 'run as administrator'" }
+    Procedure SetSystemTime tWinSystemTime NewSystemTime
+        Boolean bSuccess
+        Integer iErrorCode
+
+        Move (WINAPI_SetSystemTime (AddressOf (NewSystemTime))) to bSuccess
+        If (not (bSuccess)) Begin
+            Move (ShowLastError ()) to iErrorCode
+        End
+    End_Procedure
+    
+    { Description = "Count days between two datetime values and returns as number of weeks" }
+    { Description += "Always returns >= 0; only when error returns -1" }
+    Function CountDaysToTotalWeeks DateTime dtStart DateTime dtEnd Returns Integer
+        Integer iDaysBetween iWeeks
+        
+        If (dtStart > dtEnd) Begin
+            Function_Return -1
+        End
+        
+        Move 0 to iWeeks
+        
+        Get TotalDaysBetweenDates dtStart dtEnd to iDaysBetween  
+        Move (iDaysBetween / 7) to iWeeks             
+    
+        Function_Return iWeeks
+    End_Function
+
+    { Description = "Count days between two datetime values and returns as number of days" }
+    { Description += "Always returns >= 0; only when error returns -1" }
+    Function TotalDaysBetweenDates DateTime dtStart DateTime dtEnd Returns Integer
+        Integer iDays
+        DateTime dtTemp
+    
+        If (dtStart > dtEnd) Begin
+            Function_Return -1
+        End
+    
+        Move 0 to iDays
+        Move dtStart to dtTemp
+        While (dtTemp < dtEnd) 
+            Increment iDays
+            Move (DateAddDay (dtTemp, 1)) to dtTemp
+        Loop
+    
+        Function_Return iDays
+    End_Function   
+
+    { Description = "Calculates the total number of months between two datetime values" }
+    { Description += "Always returns >= 0; only when error returns -1" }
+    Function TotalMonthsBetween DateTime dtStart DateTime dtEnd Returns Integer
+        Integer iYearStart iYearEnd iMonthStart iMonthEnd iNumYears iNumMonths iDayStart iDayEnd iMonths
+        Boolean bStartEOM bEndEOM
+    
+        If (dtStart > dtEnd) Begin
+            Function_Return -1
+        End
+        
+        Move (DateGetYear (dtEnd)) to iYearEnd
+        Move (DateGetYear (dtStart)) to iYearStart
+        Move (iYearEnd - iYearStart) to iNumYears
+        
+        Move (iNumYears * 12) to iNumMonths
+        
+        Move (DateGetMonth (dtEnd)) to iMonthEnd
+        Move (DateGetMonth (dtStart)) to iMonthStart
+        If (iMonthStart <> iMonthEnd) Begin
+            Move (iMonthEnd - iMonthStart) to iMonths    
+            Move (iNumMonths + iMonths) to iNumMonths
+        End
+        
+        Move (DateGetDay (dtStart)) to iDayStart
+        Move (DateGetDay (dtEnd)) to iDayEnd
+        If (iDayStart > iDayEnd) Begin 
+            Get IsEndOfMonth dtStart to bStartEOM
+            Get IsEndOfMonth dtEnd to bEndEOM
+            If (not(bStartEOM and bEndEOM)) Begin
+               Decrement iNumMonths 
+            End
+        End                
+        
+        Function_Return iNumMonths
+    End_Function
+    
+    { Description = "Calculates the total number of weeks between two datetime values. Days are rounded to the nearest whole number of days" }
+    { Description += "Always returns >= 0; only when error returns -1" }
+    Function TotalWeeksBetween DateTime dtStart DateTime dtEnd Returns Integer
+        TimeSpan tsDaysBetween
+        Real rNumDays
+        Integer iWeeks
+        
+        If (dtStart > dtEnd) Begin
+            Function_Return -1
+        End
+        
+        Move 0 to iWeeks
+        
+        // limited to 65,535 days ~ 180 years
+        Move (dtEnd - dtStart) to tsDaysBetween 
+        Move (SpanTotalDays (tsDaysBetween)) to rNumDays
+        Move (Round (rNumDays) / 7) to iWeeks          
+    
+        Function_Return iWeeks
+    End_Function
+
+    { Description = "Calculates the total number of months between two datetime values" }
+    { Description += "Always returns >= 0; only when error returns -1" }
+    Function TotalYearsBetween DateTime dtStart DateTime dtEnd Returns Integer
+        Integer iYearStart iYearEnd iMonthStart iMonthEnd iDayStart iDayEnd iNumYears
+    
+        If (dtStart > dtEnd) Begin
+            Function_Return -1
+        End
+        
+        Move (DateGetYear (dtEnd)) to iYearEnd
+        Move (DateGetYear (dtStart)) to iYearStart
+        
+        Move (iYearEnd - iYearStart) to iNumYears
+        
+        If (iNumYears > 0) Begin
+            Move (DateGetMonth (dtStart)) to iMonthStart
+            Move (DateGetMonth (dtEnd)) to iMonthEnd
+            If (iMonthStart = iMonthEnd) Begin
+                Move (DateGetDay (dtStart)) to iDayStart
+                Move (DateGetDay (dtEnd)) to iDayEnd
+                If (iDayStart > iDayEnd) Begin 
+                    Decrement iNumYears
+                End
+            End
+            Else Begin
+                If (iMonthStart > iMonthEnd) Begin
+                    Decrement iNumYears
+                End
+            End
+        End
+        
+        Function_Return iNumYears
+    End_Function
+
+    { Description = "Returns the date of the first day of the first week in a given year" }
+    Function StartDateFirstWeekOfYear Integer iYear Returns DateTime
+        DateTime dtJan1 dtResult dtResult2
+        Integer iWeekDayStart iWeekDay eFirstWeekOfYearType
+
+        Get MondayOfWeekYear 1 iYear to dtResult2
+
+        // Construct January 1st for the passed year
+        Move (DateSetYear (dtJan1, iYear)) to dtJan1
+        Move (DateSetMonth (dtJan1, 1)) to dtJan1
+        Move (DateSetDay (dtJan1, 1)) to dtJan1
+
+        Get FirstDayOfWeek to iWeekDayStart // 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
+        // Correct for the fact that the DateGetDayOfWeek_WDS uses 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday, 6=Friday, 7=Saturday
+        If (iWeekDayStart = 6) Begin
+            Move 1 to iWeekDayStart
+        End
+        Else Begin
+            Move (iWeekDayStart + 2) to iWeekDayStart
+        End
+        Move (DateGetDayofWeek_WDS (dtJan1, iWeekDayStart)) to iWeekDay
+
+        // Find out how to determine what is the first week of the year.
+        // ISO 8601 defines this as that the dirst week containing at least four days is the first week of the year.
+        Get FirstWeekOfYear to eFirstWeekOfYearType
+        Case Begin
+            Case (eFirstWeekOfYearType = 0)
+                Move dtJan1 to dtResult
+                Case Break
+            Case (eFirstWeekOfYearType = 1)
+                If (iWeekDay > 1) Begin
+                    Move (DateAddDay (dtJan1, 7 - iWeekDay)) to dtResult
+                End
+                Else Begin
+                    Move dtJan1 to dtResult
+                End
+                Case Break
+            Case (eFirstWeekOfYearType = 2)
+                If (iWeekDay <> 1) Begin
+                    Move (DateAddDay (dtJan1, 7)) to dtResult
+                End
+                Else Begin
+                    Move dtJan1 to dtResult
+                End
+                Move (DateGetDayofWeek_WDS (dtResult, iWeekDayStart)) to iWeekDay
+                Move (DateAddDay (dtResult, 1 - iWeekDay)) to dtResult
+                Case Break
+        Case End
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Retrieves the current system date and time in UTC format." }
+    Function SystemTime Returns tWinSystemTime
+        tWinSystemTime CurrentSystemTime
+        Integer iVoid
+
+        Move (WinAPI_GetSystemTime (AddressOf (CurrentSystemTime))) to iVoid
+
+        Function_Return CurrentSystemTime
+    End_Function
+
+    { Description = "Determines whether the system is applying periodic time adjustments to its time-of-day clock." }
+    Function SystemTimeAdjustment Returns tTimeAdjustment
+        tTimeAdjustment TimeAdjustments
+        Boolean bSuccess
+
+        Move (WINAPI_GetSystemTimeAdjustment (AddressOf (TimeAdjustments.uiAdjustment), AddressOf (TimeAdjustments.uiIncrement), AddressOf (TimeAdjustments.bDisabled))) to bSuccess
+
+        Function_Return TimeAdjustments
+    End_Function
+
+    { Description = "Retrieves the current system Date and Time in UTC format." }
+    Function SystemTimeAsFileTime Returns tWinFileTime
+        tWinFileTime CurrentSystemTime
+        Integer iVoid
+
+        Move (WINAPI_GetSystemTimeAsFileTime (AddressOf (CurrentSystemTime))) to iVoid
+
+        Function_Return CurrentSystemTime
+    End_Function
+
+    { Description = "Formats a tSystemTime value to a DataFlex DateTime value" }
+    Function SystemTimeToDateTime tWinSystemTime SystemTimeIn Returns DateTime
+        String sFormattedTime sFormattedDate
+        Integer iDecimalSeparator
+        DateTime dtResult
+
+        Get FormatSystemTimeToTime SystemTimeIn to sFormattedTime
+        If (SystemTimeIn.wMilliseconds > 0) Begin
+            Get_Attribute DF_DECIMAL_SEPARATOR to iDecimalSeparator
+            Move (sFormattedTime + Character (iDecimalSeparator) + Cast (SystemTimeIn.wMilliseconds, String)) to sFormattedTime
+        End
+        Get FormatSystemTimeToDate SystemTimeIn to sFormattedDate
+
+        Move (sFormattedDate * sFormattedTime) to dtResult
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Converts a system time to file time format. System time is based on Coordinated Universal Time (UTC)." }
+    Function SystemTimeToFileTime tWinSystemTime SystemTimeIn Returns tWinFileTime
+        tWinFileTime FileTimeResult
+        Boolean bSuccess
+
+        Move (WinAPI_SystemTimeToFileTime (AddressOf (SystemTimeIn), AddressOf (FileTimeResult))) to bSuccess
+
+        Function_Return FileTimeResult
+    End_Function
+
+    { Description = "Converts a tSystemTime value via TimeZoneInformation to a TimeZone Specific Local Time" }
+    Function SystemTimeToTzSpecificLocalTime tTimeZoneInformation TimeZoneInfo tWinSystemTime SystemTimeIn Returns tWinSystemTime
+        Boolean bSuccess
+        tWinSystemTime LocalSystemTime
+        Integer iErrorCode
+
+        Move (WinAPI_SystemTimeToTzSpecificLocalTime (AddressOf (TimeZoneInfo), AddressOf (SystemTimeIn), AddressOf (LocalSystemTime))) to bSuccess
+        If (not (bSuccess)) Begin
+            Move (ShowLastError ()) to iErrorCode
+        End
+
+        Function_Return LocalSystemTime
+    End_Function
+
+    { Description = "Retrieves system timing information. On a multiprocessor system, the values returned are the sum of the designated times across all processors." }
+    Function SystemTimes Time ByRef tIdle Time ByRef tKernel Time ByRef tUser Returns Boolean
+        tWinFileTime IdleTime KernelTime UserTime
+        Boolean bResult
+        DateTime dtResult
+
+        Move (WinAPI_GetSystemTimes (AddressOf (IdleTime), AddressOf (KernelTime), AddressOf (UserTime))) to bResult
+        If (bResult) Begin
+            Get FileTimeToDateTime IdleTime to dtResult
+            Move (Cast (dtResult, Time)) to tIdle
+            Get FileTimeToDateTime KernelTime to dtResult
+            Move (Cast (dtResult, Time)) to tKernel
+            Get FileTimeToDateTime UserTime to dtResult
+            Move (Cast (dtResult, Time)) to tUser
+        End
+
+        Function_Return bResult
+    End_Function
+
+    { Description = "Retrieves the number of milliseconds that have elapsed since the system was started, up to 49.7 days." }
+    Function TickCount Returns UInteger
+        UInteger uiTickCount
+
+        Move (GetTickCount ()) to uiTickCount
+
+        Function_Return uiTickCount
+    End_Function
+
+    { Description = "Retrieves the number of milliseconds that have elapsed since the system was started." }
+    Function TickCount64 Returns UBigInt
+        UBigInt ubiTickCount
+
+        Move (GetTickCount64 ()) to ubiTickCount
+
+        Function_Return ubiTickCount
+    End_Function
+
+    { Description = "Retrieves the current time zone settings." }
+    Function TimeZoneInformation Returns tTimeZoneInformation
+        tTimeZoneInformation TimeZoneInfo
+        Integer iRetval
+
+        Move (WinAPI_GetTimeZoneInformation (AddressOf (TimeZoneInfo))) to iRetval
+
+        Function_Return TimeZoneInfo
+    End_Function
+
+    { Description = "Retrieves the current time zone settings for a specific year." }
+    Function TimeZoneInformationForYear UInteger uiYear Returns tTimeZoneInformation
+        tTimeZoneInformation TimeZoneInfo
+        tDynamicTimeZoneInformation DynamicTimeZoneInfo
+        Integer iRetval
+
+        Move (WinAPI_GetTimeZoneInformationForYear (uiYear, AddressOf (DynamicTimeZoneInfo), AddressOf (TimeZoneInfo))) to iRetval
+
+        Function_Return TimeZoneInfo
+    End_Function
+
+    { Description = "Converts a transition time (from DST to STD or vice-versa) to a formatted date and time" }
+    { Description += "The Day number in the system time is not the day of the month but the n-th weekday of the month" }
+    { Description += "The year is only present when it is not a specific date" }
+    Function TransitionDateTime tWinSystemTime TransitionTimeIn Returns String
+        String sFormattedTime sFormattedDate sDayName
+        Integer iRetval iDayIdentifier iDecimalSeparator
+
+        If (TransitionTimeIn.wHour > 0 or TransitionTimeIn.wMinute > 0) Begin
+            Get FormatSystemTimeToTime TransitionTimeIn to sFormattedTime
+            If (TransitionTimeIn.wMilliseconds > 0) Begin
+                Get_Attribute DF_DECIMAL_SEPARATOR to iDecimalSeparator
+                Move (sFormattedTime + Character (iDecimalSeparator) + Cast (TransitionTimeIn.wMilliseconds, String)) to sFormattedTime
+            End
+        End
+        If (TransitionTimeIn.wYear <> 0) Begin
+            Get FormatSystemTimeToDate TransitionTimeIn to sFormattedDate
+        End
+        Else Begin
+            Case Begin
+                Case (TransitionTimeIn.wMonth < 13 and TransitionTimeIn.wMonth >= 1)
+                    Get LocaleMonthName of oLocaleInfoHandler (TransitionTimeIn.wMonth - 1 + LOCALE_SABBREVMONTHNAME1) to sFormattedDate
+                    Case Break
+                Case (TransitionTimeIn.wMonth = 13)
+                    Get LocaleMonthName of oLocaleInfoHandler LOCALE_SABBREVMONTHNAME13 to sFormattedDate
+                    Case Break
+                Case Else
+                    // No month information so no date
+            Case End
+            If (TransitionTimeIn.wDay >= 1) Begin
+                Case Begin
+                    Case (TransitionTimeIn.wDay = 1)
+                        Move (sFormattedDate * Cast (TransitionTimeIn.wDay, String) + "st") to sFormattedDate
+                        Case Break
+                    Case (TransitionTimeIn.wDay = 2)
+                        Move (sFormattedDate * Cast (TransitionTimeIn.wDay, String) + "nd") to sFormattedDate
+                        Case Break
+                    Case (TransitionTimeIn.wDay = 3)
+                        Move (sFormattedDate * Cast (TransitionTimeIn.wDay, String) + "rd") to sFormattedDate
+                        Case Break
+                    Case (TransitionTimeIn.wDay = 4)
+                        Move (sFormattedDate * Cast (TransitionTimeIn.wDay, String) + "th") to sFormattedDate
+                        Case Break
+                    Case (TransitionTimeIn.wDay = 5)
+                        Move (sFormattedDate * "last") to sFormattedDate
+                        Case Break
+                Case End
+                If (TransitionTimeIn.wDayOfWeek = 0) Begin
+                    Move LOCALE_SABBREVDAYNAME7 to iDayIdentifier
+                End
+                Else Begin
+                    Move (TransitionTimeIn.wDayOfWeek - 1 + LOCALE_SABBREVDAYNAME1) to iDayIdentifier
+                End
+                Get LocaleDayName of oLocaleInfoHandler iDayIdentifier to sDayName
+                Move (sFormattedDate * sDayname) to sFormattedDate
+            End
+        End
+        Function_Return (sFormattedDate * sFormattedTime)
+    End_Function
+
+    { Description = "Converts - like the TransitionDateTime - a transition time (from DST to STD or vice-versa) to a formatted date and time" }
+    { Description += "Difference is the year number passed which instructs this routine to first make the systemtime a real date" }
+    Function TransitionDateTimeForYear tWinSystemTime TransitionTimeIn Integer iYear Returns String
+        Date dtFindDay
+        Integer iOccurance iDecimalSeparator
+        String sFormattedTime sFormattedDate
+        Boolean bStop
+
+        If (TransitionTimeIn.wMonth > 0) Begin
+            Move 1/1/2000 to dtFindDay // a fixed date to make it a date
+            Move (DateSetYear (dtFindDay, iYear)) to dtFindDay
+            Move (DateSetMonth (dtFindDay, TransitionTimeIn.wMonth)) to dtFindDay
+
+            // Now we have the first day of the month so progress through the month to find the N-th occurance,
+            // present in the wDay member, of the weekday. When wDay is 5 it indicates the last occurance and
+            // not the 5th occurance.
+            If (TransitionTimeIn.wDay = 5) Begin
+                Move (DateAddMonth (dtFindDay, 1)) to dtFindDay
+                While (not (bStop))
+                    Move (DateAddDay (dtFindDay, -1)) to dtFindDay
+                    // DateGetDayOfWeek returns 1 for Sunday but in the TransitionDatetime this is a 0.
+                    Move ((DateGetDayOfWeek (dtFindDay) - 1) = TransitionTimeIn.wDayOfWeek) to bStop
+                Loop
+            End
+            Else Begin
+                While (not (bStop))
+                    // DateGetDayOfWeek returns 1 for Sunday but in the TransitionDatetime this is a 0.
+                    If ((DateGetDayOfWeek (dtFindDay) - 1) = TransitionTimeIn.wDayOfWeek) Begin
+                        Increment iOccurance
+                        Move (iOccurance = TransitionTimeIn.wDay) to bStop
+                    End
+                    If (not (bStop)) Begin
+                        Move (DateAddDay (dtFindDay, 1)) to dtFindDay
+                    End
+                Loop
+            End
+
+            Move (DateGetDay (dtFindDay)) to TransitionTimeIn.wDay
+            Move iYear to TransitionTimeIn.wYear
+
+            Get FormatSystemTimeToDate TransitionTimeIn to sFormattedDate
+            Get FormatSystemTimeToTime TransitionTimeIn to sFormattedTime
+            If (TransitionTimeIn.wMilliseconds > 0) Begin
+                Get_Attribute DF_DECIMAL_SEPARATOR to iDecimalSeparator
+                Move (sFormattedTime + Character (iDecimalSeparator) + Cast (TransitionTimeIn.wMilliseconds, String)) to sFormattedTime
+            End
+
+            Function_Return (sFormattedDate * sFormattedTime)
+        End
+
+        Function_Return ""
+    End_Function
+
+    { Description = "Calculates the UTC DateTime from a UNIX time. UNIX time is the number of seconds since 1/1/1970" }
+    Function UnixTimeToUTCDateTime Integer iSeconds Returns DateTime
+        DateTime dtResult
+
+        Move 1/1/1970 to dtResult
+        Move (DateAddSecond (dtResult, iSeconds)) to dtResult
+
+        Function_Return dtResult
+    End_Function
+
+    { Description = "Calculates the DateTime from a UNIX time. UNIX time is the number of seconds since 1/1/1970" }
+    Function UnixTimeToLocalDateTime Integer iSeconds Returns DateTime
+        DateTime dtResult
+        tWinSystemTime stResult
+        tTimeZoneInformation tzInfo
+
+        Move 1/1/1970 to dtResult
+        Move (DateAddSecond (dtResult, iSeconds)) to dtResult
+
+        Get DateTimeToSystemTime dtResult to stResult
+        Get TimeZoneInformation to tzInfo
+        Get SystemTimeToTzSpecificLocalTime tzInfo stResult to stResult
+        Get SystemTimeToDateTime stResult to dtResult
+
+        Function_Return dtResult
+    End_Function
+End_Class
+

@@ -1,0 +1,10 @@
+﻿Use VdfBase.pkg
+
+// The GetSystemTimePreciseAsFileTime function retrieves the current system date and time with the highest possible level of precision (<1us).
+// The retrieved information is in Coordinated Universal Time (UTC) format.
+
+External_Function WinAPI_GetSystemTimePreciseAsFileTime "GetSystemTimePreciseAsFileTime" Kernel32.Dll ;
+    Pointer lpSystemTimeAsFileTime ;
+    Returns Boolean
+
+

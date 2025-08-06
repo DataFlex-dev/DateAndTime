@@ -1,0 +1,14 @@
+﻿Use VdfBase.pkg
+
+// Retrieves the current system date and time. The information is in Coordinated Universal Time (UTC) format.
+
+// Parameters
+//    lpSystemTimeAsFileTime [out]
+//       a Pointer to a FILETIME structure to receive the current system Date and Time in UTC format.
+// Return Value
+//    This Function does not return a value.
+
+External_Function WINAPI_GetSystemTimeAsFileTime "GetSystemTimeAsFileTime" Kernel32.Dll ;
+    Pointer lpSystemTimeAsFileTime ;
+    Returns Void_Type
+    

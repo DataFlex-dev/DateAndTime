@@ -1,0 +1,39 @@
+﻿Use VdfBase.pkg
+
+// This function formats the time in a picture-string passed
+//
+// Picture  Meaning
+//
+//    h     Hours with no leading zero for single-digit hours; 12-hour clock
+//    hh    Hours with leading zero for single-digit hours; 12-hour clock
+//    H     Hours with no leading zero for single-digit hours; 24-hour clock
+//    HH    Hours with leading zero for single-digit hours; 24-hour clock
+//    m     Minutes with no leading zero for single-digit minutes
+//    mm    Minutes with leading zero for single-digit minutes
+//    s     Seconds with no leading zero for single-digit seconds
+//    ss    Seconds with leading zero for single-digit seconds
+//    t     One character time marker string, such as A or P
+//    tt    Multicharacter time marker string, such as AM or PM
+//
+// For example, to get the time string
+//    "11:29:40 PM"
+// use the following picture string:
+//    "hh':'mm':'ss tt"
+
+External_Function WinApi_GetTimeFormatEx "GetTimeFormatEx" Kernel32.Dll ;
+    Pointer lpLocaleName ;
+    UInteger dwFlags ;
+    Pointer lpsSystemTime ;
+    Pointer lpFormat ;
+    Pointer lpTimeStr ;
+    Integer cchTime ;
+    Returns Integer
+
+External_Function WinApi_GetTimeFormat "GetTimeFormatW" Kernel32.Dll ;
+    UInteger LCID ;
+    UInteger dwFlags ;
+    Pointer lpsSystemTime ;
+    Pointer lpFormat ;
+    Pointer lpTimeStr ;
+    Integer cchTime ;
+    Returns Integer

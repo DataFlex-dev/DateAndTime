@@ -1,0 +1,9 @@
+﻿Use VdfBase.pkg
+
+External_Function WinAPI_SystemTimeToTzSpecificLocalTime "SystemTimeToTzSpecificLocalTime" Kernel32.Dll ;
+    Pointer lpTimeZone ;
+    Pointer lpUniversalTime ;
+    Pointer lpLocalTime ;
+    Returns Boolean
+
+

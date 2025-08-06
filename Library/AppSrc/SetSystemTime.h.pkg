@@ -1,0 +1,20 @@
+﻿Use VdfBase.pkg
+
+// Sets the current system Time and Date. The system Time is expressed in Coordinated Universal Time (UTC).
+
+// Parameters
+//    lpSystemTime [in]
+//       a Pointer to a SYSTEMTIME structure that contains the new system Date and Time.
+//       The wDayOfWeek member of the SYSTEMTIME structure is ignored.
+// Return Value
+//    If the Function succeeds, the return value is nonzero.
+//    If the Function fails, the return value is zero. to Get extended Error information, call GetLastError.
+// Remarks
+//    The calling process must have the SE_SYSTEMTIME_NAME privilege. This privilege is disabled by default. 
+//    The SetSystemTime Function enables the SE_SYSTEMTIME_NAME privilege before changing the system Time and 
+//    disables the privilege before returning. for more information, see Running with Special Privileges.
+
+External_Function WINAPI_SetSystemTime "SetSystemTime" Kernel32.dll ;
+    Pointer lpSystemTime ;
+    Returns Boolean
+    

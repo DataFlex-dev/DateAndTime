@@ -1,0 +1,10 @@
+﻿Use VdfBase.pkg
+
+External_Function WinAPI_EnumDynamicTimeZoneInformation "EnumDynamicTimeZoneInformation" AdvApi32.Dll ;
+    UInteger dwIndex ;
+    Pointer lpTimeZoneInformation ;
+    Returns UInteger
+    
+Define ERROR_SUCCESS            for 0
+Define ERROR_INVALID_PARAMETER  for 87
+Define ERROR_NO_MORE_ITEMS      for 259

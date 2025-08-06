@@ -1,0 +1,3 @@
+External_Function WINAPI_SetLocalTime "SetLocalTime" Kernel32.dll ;
+    Pointer lpSystemTime ;
+    Returns Boolean
