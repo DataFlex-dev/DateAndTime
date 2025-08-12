@@ -14,7 +14,7 @@ The DataFlex DateAndTime Library contains several functions to assist with anyth
 3. cLocaleInfoHandler
    
 ##### Note
-The Conversions Library is needed to be able to use this library
+The [Conversions Library](https://github.com/DataFlex-dev/Conversions) is needed to be able to use this library
 
 ---
 
