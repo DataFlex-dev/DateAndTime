@@ -4,7 +4,7 @@ Version=25.0
 ConfigFile=.\Programs\Config.ws
 [Libraries]
 Lib1=..\Library\DateTime.sws
-Lib2=..\Library\Libraries\Conversions\Conversions.sws
+Lib2=..\Library\Libraries\Conversions\Library\Conversions.sws
 [Conditionals]
 Is$WebApp=False
 Is$Win64=True

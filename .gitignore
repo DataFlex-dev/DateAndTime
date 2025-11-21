@@ -12,3 +12,7 @@ Demo/AppHtml/CssThemes
 Demo/AppHtml/DfEngine
 Demo/AppHtml/web.config
 Demo/AppHtml/global.asa
+**.fld
+**.pbg
+**.pdp
+**.pkd
