@@ -1,8 +1,13 @@
-[Properties]
-Version=25.0
-[WorkspacePaths]
-ConfigFile=.\Programs\Config.ws
-[Projects]
-Project0=TestLibrary.Src
-[Conditionals]
-Is$WebApp=False
+{
+    "dependencies": [
+        "DataFlex-dev/Conversions#1.0.0"
+    ],
+    "description": "The DataFlex DataTime library.",
+    "df": 26.0,
+    "package": {
+        "df-max": 26.0,
+        "df-min": 26.0,
+        "icon": "Icon.png",
+        "version": "1.0.0"
+    }
+}
